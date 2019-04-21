@@ -1146,13 +1146,14 @@ int csql_socketconnect (csqldb *db) {
     fd_set write_fds;
     fd_set except_fds;
     struct timeval tv;
+	int i;
     
 	while (rc == 0 && ((now - start) < connect_timeout)) {
 		FD_ZERO(&write_fds);
         FD_ZERO(&except_fds);
         
         int nfds = 0;
-        for (int i=0; i<MAX_SOCK_LIST; ++i) {
+        for (i=0; i<MAX_SOCK_LIST; ++i) {
             if (sock_list[i]) {
                 FD_SET(sock_list[i], &write_fds);
                 FD_SET(sock_list[i], &except_fds);
@@ -1172,7 +1173,7 @@ int csql_socketconnect (csqldb *db) {
         }
         
         // check for error first
-        for (int i=0; i<MAX_SOCK_LIST; ++i) {
+        for (i=0; i<MAX_SOCK_LIST; ++i) {
             if (sock_list[i] > 0) {
                 if (FD_ISSET(sock_list[i], &except_fds)) {
                     closesocket(sock_list[i]);
@@ -1182,7 +1183,7 @@ int csql_socketconnect (csqldb *db) {
         }
         
         // check which file descriptor is ready (need to check for socket error also)
-        for (int i=0; i<MAX_SOCK_LIST; ++i) {
+        for (i=0; i<MAX_SOCK_LIST; ++i) {
             if (sock_list[i] > 0) {
                 if (FD_ISSET(sock_list[i], &write_fds)) {
                     int err = csql_socketerror(sock_list[i]);
@@ -1205,7 +1206,7 @@ int csql_socketconnect (csqldb *db) {
 	}
     
     // close still opened sockets
-    for (int i=0; i<MAX_SOCK_LIST; ++i) {
+    for (i=0; i<MAX_SOCK_LIST; ++i) {
         if ((sock_list[i] > 0) && (sock_list[i] != sockfd)) closesocket(sock_list[i]);
     }
     
