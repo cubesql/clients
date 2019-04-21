@@ -1354,7 +1354,7 @@ int csql_send_statement (csqldb *db, int command_type, const char *sql, int is_p
 csqlc *csql_read_cursor (csqldb *db, csqlc *existing_c) {
 	csqlc	*c = NULL;
 	int		index, gdone = kFALSE, is_partial = kFALSE;
-	int		has_tables, has_rowid, nfields, server_rowcount, server_colcount, cursor_colcount;
+	int		has_tables, has_rowid, server_rowcount, server_colcount, cursor_colcount;
 	char	*buffer;
 	int		i, nrows, ncols, count, data_seek = 0, end_chuck;
 	int		*server_types, *server_sizes, *server_sum;
@@ -1395,7 +1395,7 @@ csqlc *csql_read_cursor (csqldb *db, csqlc *existing_c) {
 		if (TESTBIT(db->reply.flag1, SERVER_SERVER_SIDE)) c->server_side = kTRUE;
 		if (c->server_side) is_partial = kFALSE;
 		
-		nfields = ntohl(db->reply.numFields);
+	//	nfields = ntohl(db->reply.numFields);
 		server_rowcount = ntohl(db->reply.rows);
 		server_colcount = ntohl(db->reply.cols);
 		cursor_colcount = (has_rowid ? server_colcount-1 : server_colcount);
@@ -2101,11 +2101,11 @@ void csql_seterror(csqldb *db, int errcode, const char *errmsg) {
 }
 
 int csql_socketerror (int fd) {
-	int			err, sockerr, err2;
+	int			err, sockerr;
 	socklen_t	errlen = sizeof(err);
 	
 	sockerr = bsd_getsockopt(fd, SOL_SOCKET, SO_ERROR, (char *)&err, &errlen);
-	err2 = errno;
+//	err2 = errno;
 	
 	if (sockerr < 0)
 		return -1;
