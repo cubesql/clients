@@ -673,14 +673,17 @@ csqlc *cubesql_vmselect (csqlvm *vm) {
 
 int cubesql_vmclose (csqlvm *vm) {
     if (!vm) return CUBESQL_NOERR;
-    
-	csqldb *db = vm->db;
 	
-	csql_initrequest(db, 0, 0, kVM_CLOSE, kNO_SELECTOR);
-	csql_netwrite(db, NULL, 0, NULL, 0);
-	csql_netread(db, -1, -1, kFALSE, NULL, NO_TIMEOUT);
-	
-	free(vm);
+	{ // bracket needed to avoid compile error in VS 2008
+		
+		csqldb *db = vm->db;
+		
+		csql_initrequest(db, 0, 0, kVM_CLOSE, kNO_SELECTOR);
+		csql_netwrite(db, NULL, 0, NULL, 0);
+		csql_netread(db, -1, -1, kFALSE, NULL, NO_TIMEOUT);
+		
+		free(vm);
+	}
 	return CUBESQL_NOERR;
 }
 
@@ -1050,7 +1053,24 @@ int csql_socketconnect (csqldb *db) {
     // apparently a listening IPv4 socket can accept incoming connections from only IPv4 clients
     // so I must explicitly connect using IPv4 if I want to be able to connect with older cubeSQL versions
     // https://stackoverflow.com/questions/16480729/connecting-ipv4-client-to-ipv6-server-connection-refused
-    
+	
+	// variables
+	int rc;
+	int sock_index = 0;
+	int sock_current = 0;
+	int sock_list[MAX_SOCK_LIST] = {0};
+	int connect_timeout;
+	int i;
+	int socket_err = 0;
+	int sockfd = 0;
+	struct timeval tv;
+	char port_string[256];
+	time_t start;
+	time_t now;
+	fd_set write_fds;
+	fd_set except_fds;
+	
+	
     // ipv4/ipv6 specific variables
     struct sockaddr_storage serveraddr;
     struct addrinfo hints, *addr_list = NULL, *addr;
@@ -1064,7 +1084,7 @@ int csql_socketconnect (csqldb *db) {
     // check if we were provided the address of the server using
     // inet_pton() to convert the text form of the address to binary form.
     // If it is numeric then we want to prevent getaddrinfo() from doing any name resolution.
-    int rc = inet_pton(AF_INET, (const char *) db->host, &serveraddr);
+    rc = inet_pton(AF_INET, (const char *) db->host, &serveraddr);
     if (rc == 1) { /* valid IPv4 text address? */
         hints.ai_family = AF_INET;
         hints.ai_flags |= AI_NUMERICHOST;
@@ -1078,7 +1098,6 @@ int csql_socketconnect (csqldb *db) {
     }
     
     // get the address information for the server using getaddrinfo()
-    char port_string[256];
     snprintf(port_string, sizeof(port_string), "%d", db->port);
     rc = getaddrinfo((const char *) db->host, port_string, &hints, &addr_list);
     if (rc != 0 || addr_list == NULL) {
@@ -1086,11 +1105,9 @@ int csql_socketconnect (csqldb *db) {
         return -1;
     }
     
-    int sock_index = 0;
-    int sock_current = 0;
-    int sock_list[MAX_SOCK_LIST] = {0};
     for (addr = addr_list; addr != NULL; addr = addr->ai_next, ++sock_index) {
-        if (sock_index >= MAX_SOCK_LIST) break;
+		int len = 1;
+		if (sock_index >= MAX_SOCK_LIST) break;
         
         // display protocol specific formatted address
         // char szHost[256], szPort[16];
@@ -1101,7 +1118,6 @@ int csql_socketconnect (csqldb *db) {
         if (sock_current < 0) continue;
         
         // set socket options
-        int len = 1;
         bsd_setsockopt(sock_current, SOL_SOCKET, SO_KEEPALIVE, (const char *) &len, sizeof(len));
         len = 1;
         bsd_setsockopt(sock_current, IPPROTO_TCP, TCP_NODELAY, (const char *) &len, sizeof(len));
@@ -1136,19 +1152,12 @@ int csql_socketconnect (csqldb *db) {
     freeaddrinfo(addr_list);
 	
 	// calculate the connection timeout and reset timers
-	int connect_timeout = (db->timeout > 0) ? db->timeout : CUBESQL_DEFAULT_TIMEOUT;
-	time_t start = time(NULL);
-    time_t now = start;
+	connect_timeout = (db->timeout > 0) ? db->timeout : CUBESQL_DEFAULT_TIMEOUT;
+	start = time(NULL);
+    now = start;
     rc = 0;
     
-    int socket_err = 0;
-    int sockfd = 0;
-    fd_set write_fds;
-    fd_set except_fds;
-    struct timeval tv;
-	int i;
-    
-	while (rc == 0 && ((now - start) < connect_timeout)) {
+    while (rc == 0 && ((now - start) < connect_timeout)) {
 		FD_ZERO(&write_fds);
         FD_ZERO(&except_fds);
         
@@ -1224,8 +1233,10 @@ int csql_socketconnect (csqldb *db) {
 	}
 	
 	// turn off non-blocking
-	int ioctl_blocking = 0;	/* ~0; //TRUE; */
-	ioctl(sockfd, FIONBIO, &ioctl_blocking);
+	{
+		int ioctl_blocking = 0;	/* ~0; //TRUE; */
+		ioctl(sockfd, FIONBIO, &ioctl_blocking);
+	}
 	
 	// socket is connected now check for SSL
     #if CUBESQL_ENABLE_SSL_ENCRYPTION
