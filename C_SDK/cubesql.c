@@ -1487,8 +1487,8 @@ csqlc *csql_read_cursor (csqldb *db, csqlc *existing_c) {
 		
 		// adjust pointers for server side cursors
 		if ((c->server_side) && (Index > 0)) {
-			c->Index++;
-			if ((c->Index > 1) && (c->p0 != (char *)c->size)) free(c->size);
+			c->index++;
+			if ((c->index > 1) && (c->p0 != (char *)c->size)) free(c->size);
 			c->types = (int *) c->p0;
 			c->names = (char *) (c->p0 + (sizeof(int) * server_colcount));
 			c->size = server_sizes;
