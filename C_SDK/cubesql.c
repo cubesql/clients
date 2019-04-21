@@ -2674,7 +2674,7 @@ int encrypt_buffer (char *buffer, int dim, char Random[], csql_aes_encrypt_ctx c
         csql_aes_encrypt((const unsigned char*) (dbuf + dim), (unsigned char*)(dbuf + dim), ctx);
         
         // copy back encrypted data
-        memcpy(random, dbuf, BLOCK_LEN);
+        memcpy(Random, dbuf, BLOCK_LEN);
         memcpy(buffer, dbuf + BLOCK_LEN, dim);
         
         return (dim+BLOCK_LEN);
