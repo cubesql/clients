@@ -1136,11 +1136,13 @@ int csql_socketconnect (csqldb *db) {
             #endif
             bsd_setsockopt(sock_current, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&ipv6only, sizeof(ipv6only));
         }
-        
-        // turn on non-blocking
-        unsigned long ioctl_blocking = 1;    /* ~0; //TRUE; */
-        ioctl(sock_current, FIONBIO, &ioctl_blocking);
-        
+		
+		{
+			// turn on non-blocking
+			unsigned long ioctl_blocking = 1;    /* ~0; //TRUE; */
+			ioctl(sock_current, FIONBIO, &ioctl_blocking);
+		}
+		
         // initiate non-blocking connect ignoring return code
         connect(sock_current, addr->ai_addr, addr->ai_addrlen);
         
@@ -1158,10 +1160,10 @@ int csql_socketconnect (csqldb *db) {
     rc = 0;
     
     while (rc == 0 && ((now - start) < connect_timeout)) {
+		int nfds = 0;
 		FD_ZERO(&write_fds);
         FD_ZERO(&except_fds);
         
-        int nfds = 0;
         for (i=0; i<MAX_SOCK_LIST; ++i) {
             if (sock_list[i]) {
                 FD_SET(sock_list[i], &write_fds);
