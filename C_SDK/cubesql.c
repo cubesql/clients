@@ -2653,12 +2653,12 @@ void random_hash_field (unsigned char hval[], const char *randpoll, const char *
 	csql_sha1((unsigned char *)hval, (const unsigned char *)buffer, kRANDPOOLSIZE+SHA1_DIGEST_SIZE);
 }
 
-int encrypt_buffer (char *buffer, int dim, char random[], csql_aes_encrypt_ctx ctx[1]) {
+int encrypt_buffer (char *buffer, int dim, char Random[], csql_aes_encrypt_ctx ctx[1]) {
 	char    dbuf[2 * BLOCK_LEN];
 	int		i, len, Index=0;
 	char	*b1, *b2;
 	
-	memcpy(dbuf, random, BLOCK_LEN);
+	memcpy(dbuf, Random, BLOCK_LEN);
 	
 	if (dim < BLOCK_LEN) {
 		// if the buffer is less than one block
