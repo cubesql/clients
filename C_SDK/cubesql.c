@@ -1551,6 +1551,7 @@ abort_memory:
 	if (server_sum != NULL)
 	{
 		free(server_sum);
+		server_sum = NULL;
 	}
 	csql_seterror(db, CUBESQL_MEMORY_ERROR, "Not enought memory to allocate buffer required to build the cursor");
 	
