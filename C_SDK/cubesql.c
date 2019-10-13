@@ -1378,6 +1378,8 @@ csqlc *csql_read_cursor (csqldb *db, csqlc *existing_c) {
 	int		*server_types, *server_sizes, *server_sum;
 	char	*server_names, *server_data, *server_tables;
 	
+	server_sum = NULL;
+	
 	// allocate basic cursor struct
 	if (existing_c == NULL) {
 		Index = 0;
@@ -1546,6 +1548,10 @@ csqlc *csql_read_cursor (csqldb *db, csqlc *existing_c) {
 	return c;
 
 abort_memory:
+	if (server_sum != NULL)
+	{
+		free(server_sum);
+	}
 	csql_seterror(db, CUBESQL_MEMORY_ERROR, "Not enought memory to allocate buffer required to build the cursor");
 	
 abort:
